@@ -1,22 +1,23 @@
+/**
+ * This code performes breaking JWT token secret using brute-force attack.
+ */
+const Combinatorics = require('js-combinatorics');
 const JWT = require('./jwt');
 
-const header = {
-	alg: 'HS256',
-  typ: 'JWT',
-};
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODY5IiwibmFtZSI6IkVsb24gTXVzayIsInNvbHV0aW9uIjoiaHR0cHM6Ly9naXRodWIuY29tL2x1a2l4L2p3dCJ9.hBPk4rtII_TNnuBOrCDQ0suuP4TzceMNDvRVWmDgN4c';
 
-const payload = {
-	sub: '1234567890',
-  name: 'John Doe',
-  iat: 1516239022,
-};
+const secretExpectedLength = 5;
+const alphabet = 'abcdefghijklmnoprstuvwxyz'.split('');
+const baseN = Combinatorics.baseN(alphabet, secretExpectedLength);
+let foundSecret = null;
 
-const secret = 'secret string';
-
-const token = JWT.create({ header, payload, secret: 'secret string' });
-const verificationResult = JWT.verify(token, secret);
-const decodedToken = JWT.decode(token);
-
-console.log(token);
-console.log(verificationResult);
-console.log(decodedToken);
+console.time('Execution time');
+for(let n = 0; n < alphabet.length**secretExpectedLength; n++) {
+  const secret = baseN.nth(n).join('');
+  if (JWT.verify(token, secret)) {
+    foundSecret = secret;
+    break;
+  }
+}
+console.timeEnd('Execution time');
+console.log(foundSecret);

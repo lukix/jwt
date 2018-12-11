@@ -1,9 +1,9 @@
 const sha256 = require('js-sha256');
+const base64url = require('base64url');
 
-const stringToBase64 = (str) => Buffer.from(str).toString('base64');
-const base64ToString = (str) => Buffer.from(str, 'base64').toString();
-const hexStringToBase64 = (str) => Buffer.from(str, 'hex').toString('base64');
-const removeBase64Padding = (str) => str.replace(new RegExp('=', 'g'), '');
+const stringToBase64 = (str) => base64url(str);
+const base64ToString = (str) => base64url.decode(str);
+const hexStringToBase64 = (str) => base64url.fromBase64(Buffer.from(str, 'hex').toString('base64'));
 
 const encodeObject = (object) => {
 	return stringToBase64(JSON.stringify(object));
@@ -17,11 +17,11 @@ const decodeObject = (object) => {
  * Creates signed token.
  */
 const createToken = ({ header, payload, secret }) => {
-	const encodedHeader = removeBase64Padding(encodeObject(header));
-	const encodedPayload = removeBase64Padding(encodeObject(payload));
+	const encodedHeader = encodeObject(header);
+	const encodedPayload = encodeObject(payload);
 	
 	const siganture = sha256.hmac(secret, [encodedHeader, encodedPayload].join('.'));
-	const base64Signature = removeBase64Padding(hexStringToBase64(siganture));
+	const base64Signature = hexStringToBase64(siganture);
 
 	return [encodedHeader, encodedPayload, base64Signature].join('.');
 }
@@ -37,7 +37,7 @@ const verifyToken = (token, secret) => {
 	const [encodedHeader, encodedPayload, signature] = token.split('.');
 	
 	const expectedSiganture = sha256.hmac(secret, [encodedHeader, encodedPayload].join('.'));
-	const expectedBase64Signature = removeBase64Padding(hexStringToBase64(expectedSiganture));
+	const expectedBase64Signature = hexStringToBase64(expectedSiganture);
 
 	return expectedBase64Signature === signature;
 }
